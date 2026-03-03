@@ -152,37 +152,111 @@ async function copyMacOS(html: string, plainText: string): Promise<void> {
   const fullHtml = wrapHtml(html);
   const id = randomBytes(4).toString('hex');
   const htmlFile = join(tmpdir(), `vscode-md-${id}.html`);
+  const plainFile = join(tmpdir(), `vscode-md-${id}.txt`);
   await writeFile(htmlFile, fullHtml, 'utf-8');
+  await writeFile(plainFile, plainText, 'utf-8');
+  let swiftFile = '';
+
+  try {
+    try {
+      await copyMacOSWithOsaScript(htmlFile, plainFile);
+      return;
+    } catch {
+      // Fallback to Swift path (older systems can fail JXA ObjC bridge calls)
+    }
 
   // Use Swift via osascript — more reliable than AppleScript for setting
   // multiple pasteboard types (HTML + plain text) simultaneously.
   const swiftScript = `
 import Cocoa
 
-let htmlPath = "${htmlFile}"
-let plainText = """
-${plainText.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}
-"""
+let args = CommandLine.arguments
+guard args.count >= 3 else {
+  fputs("Missing clipboard input files\\n", stderr)
+  exit(2)
+}
 
-let htmlData = FileManager.default.contents(atPath: htmlPath)!
+let htmlPath = args[1]
+let plainPath = args[2]
+
+guard let htmlData = FileManager.default.contents(atPath: htmlPath) else {
+  fputs("Unable to read HTML clipboard payload\\n", stderr)
+  exit(3)
+}
+
+let plainData = FileManager.default.contents(atPath: plainPath) ?? Data()
+let plainText = String(data: plainData, encoding: .utf8) ?? ""
+
 let pb = NSPasteboard.general
 pb.clearContents()
 pb.setData(htmlData, forType: .html)
 pb.setString(plainText, forType: .string)
 `;
 
-  const swiftFile = join(tmpdir(), `vscode-md-${id}.swift`);
-  await writeFile(swiftFile, swiftScript, 'utf-8');
+    swiftFile = join(tmpdir(), `vscode-md-${id}.swift`);
+    await writeFile(swiftFile, swiftScript, 'utf-8');
+
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        'swift',
+        [swiftFile, htmlFile, plainFile],
+        { timeout: 10000 },
+        (error, _stdout, stderr) => {
+          if (error) {
+            reject(new Error(`Clipboard write failed: ${stderr || error.message}`));
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+  } finally {
+    await unlink(htmlFile).catch(() => {});
+    await unlink(plainFile).catch(() => {});
+    if (swiftFile) {
+      await unlink(swiftFile).catch(() => {});
+    }
+  }
+}
+
+async function copyMacOSWithOsaScript(htmlFile: string, plainFile: string): Promise<void> {
+  const jxa = `
+ObjC.import('AppKit')
+ObjC.import('Foundation')
+
+function run(argv) {
+  var htmlPath = argv[0]
+  var plainPath = argv[1]
+
+  var fm = $.NSFileManager.defaultManager
+  var htmlData = fm.contentsAtPath(htmlPath)
+  if (!htmlData) {
+    throw new Error('Unable to read HTML clipboard payload')
+  }
+
+  var plainData = fm.contentsAtPath(plainPath)
+  var plainText = ''
+  if (plainData) {
+    var nsStr = $.NSString.alloc.initWithDataEncoding(plainData, $.NSUTF8StringEncoding)
+    if (nsStr) {
+      plainText = ObjC.unwrap(nsStr)
+    }
+  }
+
+  var pb = $.NSPasteboard.generalPasteboard
+  pb.clearContents()
+  pb.setDataForType(htmlData, $.NSPasteboardTypeHTML)
+  pb.setStringForType($(plainText), $.NSPasteboardTypeString)
+  return 'ok'
+}
+`;
 
   return new Promise((resolve, reject) => {
     execFile(
-      'swift',
-      [swiftFile],
+      'osascript',
+      ['-l', 'JavaScript', '-e', jxa, '--', htmlFile, plainFile],
       { timeout: 10000 },
-      async (error, _stdout, stderr) => {
-        await unlink(htmlFile).catch(() => {});
-        await unlink(swiftFile).catch(() => {});
-
+      (error, _stdout, stderr) => {
         if (error) {
           reject(new Error(`Clipboard write failed: ${stderr || error.message}`));
         } else {
