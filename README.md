@@ -69,6 +69,7 @@ Two options:
 ## Known Limitations
 
 - **Images**: Web image URLs (`https://...`) work — Outlook fetches them when rendering. Local file paths (`./image.png`) will not display because the recipient has no access to your filesystem. Embedding images via base64 data URIs is not possible because Outlook strips `data:` URIs for security reasons. CID embedding requires MIME multipart, which the clipboard format does not support.
+- **Language / spell check**: The HTML output does not include a `lang` attribute, so email clients may flag words as misspelled when the content language differs from the application's default. Automatic language detection would add a dependency with uncertain accuracy — especially on short texts — and Outlook Classic primarily relies on its own proofing language settings rather than the HTML `lang` attribute.
 - macOS and Linux clipboard support has not yet been tested on those platforms.
 
 ## License
