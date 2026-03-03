@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Cross-platform font stack for code blocks (Cascadia Mono, Consolas, Courier New, monospace)
+- Fixed crash with nested lists (marked v15 token resolution)
+- Fixed crash with code blocks inside list items
+- Fixed HTML entity escaping in inline code spans (e.g. `<h1>`, `<div>`)
+
 ## 0.1.0
 
 Initial release.

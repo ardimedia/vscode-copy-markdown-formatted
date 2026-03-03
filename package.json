@@ -2,7 +2,7 @@
   "name": "copy-markdown-formatted",
   "displayName": "Copy Markdown Formatted",
   "description": "Copy Markdown as formatted HTML to clipboard — paste with full styling into Outlook, Teams, and other rich text editors.",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "publisher": "ardimedia",
   "license": "MIT",
   "repository": {
