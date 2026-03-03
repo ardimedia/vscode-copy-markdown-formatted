@@ -85,15 +85,15 @@ describe('convertMarkdownToStyledHtml', () => {
   });
 
   describe('code blocks', () => {
-    it('renders fenced code block with Consolas font', () => {
+    it('renders fenced code block with monospace font stack', () => {
       const html = convertMarkdownToStyledHtml('```\nconst x = 1;\n```');
-      expect(html).toContain('font-family:Consolas');
+      expect(html).toContain('font-family:Cascadia Mono, Consolas, Courier New, monospace');
       expect(html).toContain('const x = 1;');
     });
 
     it('wraps each line in a <p> with inline font-family', () => {
       const html = convertMarkdownToStyledHtml('```\nline1\nline2\n```');
-      const pTags = html.match(/<p style="margin:0;font-family:Consolas;font-size:10\.0pt">/g);
+      const pTags = html.match(/<p style="margin:0;font-family:Cascadia Mono, Consolas, Courier New, monospace;font-size:10\.0pt">/g);
       expect(pTags).toHaveLength(2);
     });
 
@@ -121,12 +121,19 @@ describe('convertMarkdownToStyledHtml', () => {
   });
 
   describe('inline code', () => {
-    it('renders inline code with Consolas and background', () => {
+    it('renders inline code with monospace font stack and background', () => {
       const html = convertMarkdownToStyledHtml('Use `npm install`');
       expect(html).toContain('<span style="');
-      expect(html).toContain('font-family:Consolas');
+      expect(html).toContain('font-family: Cascadia Mono, Consolas, Courier New, monospace');
       expect(html).toContain('background-color: #f3f4f6');
       expect(html).toContain('npm install');
+    });
+
+    it('escapes HTML entities in inline code', () => {
+      const html = convertMarkdownToStyledHtml('Use `<h1>` and `<div>` tags');
+      expect(html).toContain('&lt;h1&gt;');
+      expect(html).toContain('&lt;div&gt;');
+      expect(html).not.toContain('>h1<');
     });
   });
 
@@ -153,6 +160,37 @@ describe('convertMarkdownToStyledHtml', () => {
       const html = convertMarkdownToStyledHtml('5. Fifth\n6. Sixth');
       expect(html).toContain('5. Fifth');
       expect(html).toContain('6. Sixth');
+    });
+
+    it('handles nested unordered list', () => {
+      const html = convertMarkdownToStyledHtml('- Parent\n  - Child 1\n  - Child 2');
+      expect(html).toContain('&#8226; Parent');
+      expect(html).toContain('&#8226; Child 1');
+      expect(html).toContain('&#8226; Child 2');
+    });
+
+    it('handles nested list with inline formatting', () => {
+      const html = convertMarkdownToStyledHtml('- **Bold parent**\n  - *Italic child*');
+      expect(html).toContain('font-weight: 600');
+      expect(html).toContain('font-style: italic');
+    });
+
+    it('handles three levels of nesting', () => {
+      const md = '- Level 1\n  - Level 2\n    - Level 3';
+      expect(() => convertMarkdownToStyledHtml(md)).not.toThrow();
+      const html = convertMarkdownToStyledHtml(md);
+      expect(html).toContain('Level 1');
+      expect(html).toContain('Level 2');
+      expect(html).toContain('Level 3');
+    });
+
+    it('handles code block inside list item', () => {
+      const md = '- Option A: run this\n  ```bash\n  npm install\n  ```\n- Option B';
+      expect(() => convertMarkdownToStyledHtml(md)).not.toThrow();
+      const html = convertMarkdownToStyledHtml(md);
+      expect(html).toContain('Option A');
+      expect(html).toContain('npm install');
+      expect(html).toContain('Option B');
     });
   });
 
@@ -262,7 +300,7 @@ describe('convertMarkdownToStyledHtml', () => {
     it('falls back to plain rendering for unknown language', () => {
       const html = convertMarkdownToStyledHtml('```unknownlang\nconst x = 1;\n```');
       expect(html).not.toContain('color:#d73a49');
-      expect(html).toContain('font-family:Consolas');
+      expect(html).toContain('font-family:Cascadia Mono, Consolas, Courier New, monospace');
       expect(html).toContain('const x = 1;');
     });
 
@@ -272,9 +310,9 @@ describe('convertMarkdownToStyledHtml', () => {
       expect(html).toContain('const x = 1;');
     });
 
-    it('wraps each highlighted line in <p> with Consolas font', () => {
+    it('wraps each highlighted line in <p> with monospace font stack', () => {
       const html = convertMarkdownToStyledHtml('```typescript\nconst a = 1;\nconst b = 2;\n```');
-      const pTags = html.match(/<p style="margin:0;font-family:Consolas;font-size:10\.0pt">/g);
+      const pTags = html.match(/<p style="margin:0;font-family:Cascadia Mono, Consolas, Courier New, monospace;font-size:10\.0pt">/g);
       expect(pTags).toHaveLength(2);
     });
 
@@ -289,7 +327,7 @@ describe('convertMarkdownToStyledHtml', () => {
       // Comment color should appear
       expect(html).toContain('color:#6a737d');
       // Each line should be in its own <p> tag
-      const pTags = html.match(/<p style="margin:0;font-family:Consolas;font-size:10\.0pt">/g);
+      const pTags = html.match(/<p style="margin:0;font-family:Cascadia Mono, Consolas, Courier New, monospace;font-size:10\.0pt">/g);
       expect(pTags).toHaveLength(2);
     });
 

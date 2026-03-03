@@ -1,5 +1,5 @@
 import { Marked, type Renderer, type Tokens } from 'marked';
-import { STYLES, SPACER_AFTER_HEADING, SPACER_BEFORE_HEADING, SPACER_BLOCK } from './styles';
+import { STYLES, FONT_CODE, SPACER_AFTER_HEADING, SPACER_BEFORE_HEADING, SPACER_BLOCK } from './styles';
 import { highlightCode } from './highlighter';
 
 function s(tag: string): string {
@@ -57,7 +57,7 @@ const renderer: Partial<Renderer> = {
       // Highlighted: hljs already HTML-escapes the source text.
       // Each entry contains inline-styled <span> tags for syntax tokens.
       lines = highlightedLines.map(
-        (line) => `<p style="margin:0;font-family:Consolas;font-size:10.0pt">${line || '&nbsp;'}</p>`
+        (line) => `<p style="margin:0;font-family:${FONT_CODE};font-size:10.0pt">${line || '&nbsp;'}</p>`
       ).join('');
     } else {
       // Fallback: no highlighting, escape manually.
@@ -65,7 +65,7 @@ const renderer: Partial<Renderer> = {
       // inline font-family with Calibri. Pure inline styles work for both Classic and New.
       const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       lines = escaped.split('\n').map(
-        (line) => `<p style="margin:0;font-family:Consolas;font-size:10.0pt"><span style="font-family:Consolas;font-size:10.0pt">${line || '&nbsp;'}</span></p>`
+        (line) => `<p style="margin:0;font-family:${FONT_CODE};font-size:10.0pt"><span style="font-family:${FONT_CODE};font-size:10.0pt">${line || '&nbsp;'}</span></p>`
       ).join('');
     }
 
@@ -73,7 +73,8 @@ const renderer: Partial<Renderer> = {
   },
 
   codespan({ text }: Tokens.Codespan): string {
-    return `<span style="${s('code')}">${text}</span>`;
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<span style="${s('code')}">${escaped}</span>`;
   },
 
   blockquote({ tokens }: Tokens.Blockquote): string {
@@ -90,9 +91,19 @@ const renderer: Partial<Renderer> = {
   list({ ordered, start, items }: Tokens.List): string {
     let rows = '';
     items.forEach((item, i) => {
-      const body = this.parser.parseInline(item.tokens[0]?.type === 'paragraph'
-        ? (item.tokens[0] as Tokens.Paragraph).tokens
-        : item.tokens);
+      // Get inline content from the first paragraph (or text) token
+      const firstToken = item.tokens[0];
+      const inlineTokens = firstToken?.type === 'paragraph'
+        ? (firstToken as Tokens.Paragraph).tokens
+        : firstToken?.type === 'text' ? [firstToken] : [];
+      const body = this.parser.parseInline(inlineTokens);
+
+      // Render any block-level tokens after the first paragraph
+      // (nested lists, code blocks, blockquotes, etc.)
+      const blockTokens = item.tokens.slice(firstToken?.type === 'paragraph' || firstToken?.type === 'text' ? 1 : 0);
+      const nestedContent = blockTokens.length > 0
+        ? this.parser.parse(blockTokens)
+        : '';
 
       let bullet: string;
       if (item.task) {
@@ -103,14 +114,9 @@ const renderer: Partial<Renderer> = {
         bullet = '&#8226; ';
       }
       rows += row(s('li'), bullet + body);
+      rows += nestedContent;
     });
     return rows + spacer(SPACER_BLOCK);
-  },
-
-  listitem({ tokens, task, checked }: Tokens.ListItem): string {
-    // Handled in list() above — this is a fallback
-    const body = this.parser.parse(tokens);
-    return row(s('li'), body);
   },
 
   table({ header, rows: tableRows }: Tokens.Table): string {

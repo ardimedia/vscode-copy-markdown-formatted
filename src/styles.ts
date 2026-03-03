@@ -1,5 +1,5 @@
 const FONT_BODY = 'Segoe UI, Arial, sans-serif';
-const FONT_CODE = 'Cascadia Mono, Consolas, Courier New, monospace';
+export const FONT_CODE = 'Cascadia Mono, Consolas, Courier New, monospace';
 const COLOR_TEXT = '#1f2937';
 const COLOR_TEXT_LIGHT = '#374151';
 const COLOR_MUTED = '#6b7280';
@@ -26,9 +26,9 @@ export const STYLES: Record<string, string> = {
   a: `color: ${COLOR_LINK}; text-decoration: none;`,
   strong: `font-weight: 600;`,
   em: `font-style: italic;`,
-  code: `font-family:Consolas; background-color: ${COLOR_BG_LIGHT}; color: ${COLOR_TEXT}; padding: 2px 6px;`,
-  'code-block-td': `background-color: ${COLOR_CODE_BG}; padding: 16px; border: 1px solid ${COLOR_BORDER}; font-family:Consolas; font-size: 10pt; color: ${COLOR_CODE_FG}; line-height: 1.6;`,
-  'code-block-span': `font-family:Consolas`,
+  code: `font-family: ${FONT_CODE}; background-color: ${COLOR_BG_LIGHT}; color: ${COLOR_TEXT}; padding: 2px 6px;`,
+  'code-block-td': `background-color: ${COLOR_CODE_BG}; padding: 16px; border: 1px solid ${COLOR_BORDER}; font-family: ${FONT_CODE}; font-size: 10pt; color: ${COLOR_CODE_FG}; line-height: 1.6;`,
+  'code-block-span': `font-family: ${FONT_CODE}`,
   blockquote: `border-left: 4px solid ${COLOR_BORDER}; padding: 4px 0 4px 16px; color: ${COLOR_MUTED};`,
   'blockquote-p': `font-family: ${FONT_BODY}; font-size: 14px; line-height: 1.6; color: ${COLOR_MUTED}; padding: 0;`,
   table: `border-collapse: collapse; width: 100%;`,
