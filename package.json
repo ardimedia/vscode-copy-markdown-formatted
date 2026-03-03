@@ -1,0 +1,87 @@
+{
+  "name": "copy-markdown-formatted",
+  "displayName": "Copy Markdown Formatted",
+  "description": "Copy Markdown as formatted HTML to clipboard — paste with full styling into Outlook, Teams, and other rich text editors.",
+  "version": "0.1.0",
+  "publisher": "ardimedia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ardimedia/vscode-copy-markdown-formatted.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Formatters"
+  ],
+  "icon": "assets/icon.png",
+  "keywords": [
+    "markdown",
+    "clipboard",
+    "html",
+    "outlook",
+    "formatted",
+    "copy",
+    "rich text"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "copyMarkdownFormatted.copySelection",
+        "title": "Copy Selection as Formatted HTML",
+        "category": "Markdown"
+      },
+      {
+        "command": "copyMarkdownFormatted.copyFile",
+        "title": "Copy File as Formatted HTML",
+        "category": "Markdown"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "copyMarkdownFormatted.copySelection",
+          "when": "editorLangId == markdown && editorHasSelection",
+          "group": "9_cutcopypaste@10"
+        },
+        {
+          "command": "copyMarkdownFormatted.copyFile",
+          "when": "editorLangId == markdown",
+          "group": "9_cutcopypaste@11"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "copyMarkdownFormatted.copySelection",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "copyMarkdownFormatted.copyFile",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
+    "package": "vsce package",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.0",
+    "marked": "^15.0.0"
+  }
+}

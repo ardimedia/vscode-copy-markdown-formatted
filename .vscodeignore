@@ -1,0 +1,7 @@
+.claude/
+.vscode/
+src/
+node_modules/
+.gitignore
+tsconfig.json
+package-lock.json
