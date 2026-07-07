@@ -31,6 +31,24 @@ export function stripLeadingBlockquote(md: string): string {
   return lines.map((l) => l.replace(/^(\s*)> ?/, '$1')).join('\n');
 }
 
+/**
+ * Preserve leading indentation of a code line. HTML (and Outlook's Word
+ * renderer) collapse leading whitespace, so the indentation of fenced code
+ * blocks (JSON/YAML/XML, …) is lost on paste. Convert the leading run of
+ * spaces/tabs to `&nbsp;` so it survives. A tab expands to four spaces.
+ *
+ * Works for both the plain branch (line is escaped text, no tags) and the
+ * highlighted branch (line may start with reopened `<span…>` tags, which
+ * carry no spaces of their own) — the leading whitespace is matched after
+ * any such opening tags.
+ */
+function preserveIndent(lineHtml: string): string {
+  return lineHtml.replace(
+    /^((?:<[^>]*>)*)([ \t]+)/,
+    (_m, tags: string, ws: string) => tags + ws.replace(/\t/g, '    ').replace(/ /g, '&nbsp;')
+  );
+}
+
 function buildMarked(options: Required<ConvertOptions>): Marked {
   const bundle = buildStyles(options);
   const { styles, fontCode, fontCodeSize } = bundle;
@@ -76,14 +94,14 @@ function buildMarked(options: Required<ConvertOptions>): Marked {
       if (highlightedLines) {
         // Highlighted: hljs already HTML-escapes the source text.
         lines = highlightedLines.map(
-          (line) => `<p style="margin:0;font-family:${fontCode};font-size:${fontCodeSize}">${line || '&nbsp;'}</p>`
+          (line) => `<p style="margin:0;font-family:${fontCode};font-size:${fontCodeSize}">${preserveIndent(line) || '&nbsp;'}</p>`
         ).join('');
       } else {
         // No class=MsoNormal — New Outlook resets MsoNormal font-family to Calibri.
         // Pure inline styles work for both Classic and New Outlook.
         const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         lines = escaped.split('\n').map(
-          (line) => `<p style="margin:0;font-family:${fontCode};font-size:${fontCodeSize}"><span style="font-family:${fontCode};font-size:${fontCodeSize}">${line || '&nbsp;'}</span></p>`
+          (line) => `<p style="margin:0;font-family:${fontCode};font-size:${fontCodeSize}"><span style="font-family:${fontCode};font-size:${fontCodeSize}">${preserveIndent(line) || '&nbsp;'}</span></p>`
         ).join('');
       }
 

@@ -120,6 +120,22 @@ describe('convertMarkdownToStyledHtml', () => {
       const html = convertMarkdownToStyledHtml('```\ncode\n```');
       expect(html).not.toContain('class=MsoNormal');
     });
+
+    it('preserves leading indentation as &nbsp; (plain fallback)', () => {
+      const html = convertMarkdownToStyledHtml('```\n{\n  "a": 1\n}\n```');
+      // Two-space indent survives as non-breaking spaces
+      expect(html).toContain('&nbsp;&nbsp;"a": 1');
+    });
+
+    it('expands leading tabs to &nbsp; (plain fallback)', () => {
+      const html = convertMarkdownToStyledHtml('```\n\tindented\n```');
+      expect(html).toContain('&nbsp;&nbsp;&nbsp;&nbsp;indented');
+    });
+
+    it('preserves leading indentation as &nbsp; (highlighted)', () => {
+      const html = convertMarkdownToStyledHtml('```json\n{\n  "a": 1\n}\n```');
+      expect(html).toContain('&nbsp;&nbsp;');
+    });
   });
 
   describe('inline code', () => {

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-07
+
+- Fixed: indentation inside fenced code blocks was lost when pasting into Outlook. Leading whitespace collapsed because HTML (and Outlook's Word renderer) drops leading spaces. Leading indentation is now emitted as `&nbsp;` (tabs expand to four), so JSON/YAML/XML and other structured code keep their indentation exactly. Applies to both syntax-highlighted and plain code blocks ([#1](https://github.com/ardimedia-com/vscode-copy-markdown-formatted/issues/1))
+
 ## [0.4.0] - 2026-06-28
 
 - New: **persistent clipboard host on Windows (default)** — a background PowerShell process now stays ready between copies, loading the required `System.Windows.Forms` assembly once instead of on every copy. The first copy warms it up (~1–1.5s); subsequent copies are near-instant (~25–50ms). The process starts on first use, shuts down with VS Code, and self-exits if the editor closes without cleanup
